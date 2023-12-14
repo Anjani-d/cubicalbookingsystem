@@ -1,12 +1,14 @@
-
 package com.capgemini.seatbooking.service;
  
 import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+ 
 import com.capgemini.seatbooking.dto.AdminLoginDto;
+import com.capgemini.seatbooking.dto.BookingDto;
 import com.capgemini.seatbooking.dto.LoginDto;
 import com.capgemini.seatbooking.dto.UserDto;
 import com.capgemini.seatbooking.dto.UserProfileDto;
@@ -20,89 +22,102 @@ import com.capgemini.seatbooking.util.UserType;
  
 @Service
 public class UserService {
+	@Autowired
+	private UserRepository userRepository;
  
-@Autowired
-private UserRepository userRepository;
+	public User registerUser(UserDto userDto) {
+		validateUserDto(userDto);
+		// Check if the email is already registered
+		if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+			throw new RegistrationException("Email already registered");
+		}
+		// Create a new user
+		User user = new User();
+		user.setEmail(userDto.getEmail());
+		user.setUsername(userDto.getUsername());
+		String originalInput = userDto.getPassword();
+		String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
+		user.setPassword(encodedString);
+		user.setUserType(UserType.USER); // Assuming a default user type
+		// Save the user to the database
+		return userRepository.save(user);
+	}
  
-public User registerUser(UserDto userDto) {
-     validateUserDto(userDto);
-     // Check if the email is already registered
-     if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
-         throw new RegistrationException("Email already registered");
-     }
+	private void validateUserDto(UserDto userDto) {
+		if (userDto.getEmail() == null || userDto.getEmail().isEmpty() || userDto.getPassword() == null
+				|| userDto.getPassword().isEmpty()) {
+			throw new RegistrationException("Email and password cannot be empty.");
+		}
+	}
  
-     // Create a new user
-     User user = new User();
-     user.setEmail(userDto.getEmail());
-     user.setUsername(userDto.getUsername());
-     String originalInput=userDto.getPassword();
-     String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
-     user.setPassword(encodedString);
-     user.setUserType(UserType.ADMIN); // Assuming a default user type
+	public void loginUser(LoginDto loginDto) {
+		validateLoginDto(loginDto);
+		// Implement user authentication logic
+		String originalInput = loginDto.getPassword();
+		String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
+		@SuppressWarnings("unused")
+		User user = userRepository.findByEmailAndPassword(loginDto.getEmail(), encodedString)
+				.orElseThrow(() -> new LoginException("Invalid credentials"));
+	}
  
-     // Save the user to the database
-     return userRepository.save(user);
-}
-private void validateUserDto(UserDto userDto) {
-     if (userDto.getEmail() == null || userDto.getEmail().isEmpty() ||
-         userDto.getPassword() == null || userDto.getPassword().isEmpty()) {
-         throw new RegistrationException("Email and password cannot be empty.");
-     }
-}
-public void loginUser(LoginDto loginDto) {
-     validateLoginDto(loginDto);
+	private void validateLoginDto(LoginDto loginDto) {
+		if (loginDto.getEmail() == null || loginDto.getEmail().isEmpty() || loginDto.getPassword() == null
+				|| loginDto.getPassword().isEmpty()) {
+			throw new LoginException("Email and password cannot be empty.");
+		}
+	}
  
-     // Implement user authentication logic
-     String originalInput=loginDto.getPassword();
-     String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
-     @SuppressWarnings("unused")  
-	User user = userRepository.findByEmailAndPassword(loginDto.getEmail(), encodedString)
-             .orElseThrow(() -> new LoginException("Invalid credentials"));
-}
+	public void updateUserProfile(UserProfileDto userProfileDto) {
+		validateUserProfileDto(userProfileDto);
+		String originalInput = userProfileDto.getNewPassword();
+		String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
+		User user = userRepository.findByEmail(userProfileDto.getEmail())
+				.orElseThrow(() -> new ProfileManagementException("")); // Update user profile details
+		user.setPassword(encodedString);
+		userRepository.save(user);
+	}
  
-
-private void validateLoginDto(LoginDto loginDto) {
-     if (loginDto.getEmail() == null || loginDto.getEmail().isEmpty() ||
-         loginDto.getPassword() == null || loginDto.getPassword().isEmpty()) {
-         throw new LoginException("Email and password cannot be empty.");
-     }
-}
+	private void validateUserProfileDto(UserProfileDto userProfileDto) {
+		if (userProfileDto.getEmail() == null || userProfileDto.getEmail().isEmpty()
+				|| userProfileDto.getNewPassword() == null || userProfileDto.getNewPassword().isEmpty()) {
+			throw new ProfileManagementException("");
+		}
+	}
  
-public void updateUserProfile(UserProfileDto userProfileDto)
-{ 
-	 validateUserProfileDto(userProfileDto);
-	 String originalInput=userProfileDto.getNewpassword();
-     String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
-	 User user = userRepository.findByEmail(userProfileDto.getEmail())               
-			 .orElseThrow(() -> new ProfileManagementException(""));         // Update user profile details       
-	           user.setPassword(encodedString);         
-	           userRepository.save(user);
-}
-
-private void validateUserProfileDto(UserProfileDto userProfileDto) {
-    if (userProfileDto.getEmail() == null || userProfileDto.getEmail().isEmpty() ||
-   		 userProfileDto.getNewpassword() == null || userProfileDto.getNewpassword().isEmpty()) {
-        throw new ProfileManagementException("");
+	public void adminLoginUser(AdminLoginDto adminLoginDto) {
+		validateAdminLoginDto(adminLoginDto);
+ 
+		// Implement user authentication logic
+		String originalInput = adminLoginDto.getPassword();
+		String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
+		@SuppressWarnings("unused")
+		User user = userRepository.findByEmailAndPassword(adminLoginDto.getEmail(), encodedString)
+				.orElseThrow(() -> new AdminLoginException(""));
+	}
+ 
+	private void validateAdminLoginDto(AdminLoginDto adminLoginDto) {
+		if (adminLoginDto.getEmail() == null || adminLoginDto.getEmail().isEmpty()
+				|| adminLoginDto.getPassword() == null || adminLoginDto.getPassword().isEmpty()) {
+			throw new AdminLoginException("");
+		}
+ 
+	}
+	public UserProfileDto getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found")); // Handle appropriately
+ 
+        UserProfileDto userProfileDto = new UserProfileDto();
+        userProfileDto.setUserId(user.getId());
+        userProfileDto.setUsername(user.getUsername());
+        userProfileDto.setEmail(user.getEmail()); // Add this line
+        userProfileDto.setNewPassword(user.getPassword()); // Add this line
+ 
+        List<BookingDto> bookingDtos = user.getBookings().stream()
+                .map(BookingDto::fromEntity) // Implement a method to convert Booking entity to BookingDto
+                .collect(Collectors.toList());
+ 
+        userProfileDto.setBookings(bookingDtos);
+ 
+        return userProfileDto;
     }
-    
-}
-public void adminLoginUser(AdminLoginDto adminLoginDto) {
-	 validateAdminLoginDto(adminLoginDto);
-
-    // Implement user authentication logic
-    String originalInput=adminLoginDto.getPassword();
-    String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
-    @SuppressWarnings("unused")  
-	User user = userRepository.findByEmailAndPassword(adminLoginDto.getEmail(), encodedString)
-            .orElseThrow(() -> new AdminLoginException(""));
-}
-
-
-private void validateAdminLoginDto(AdminLoginDto adminLoginDto) {
-    if (adminLoginDto.getEmail() == null || adminLoginDto.getEmail().isEmpty() ||
-        adminLoginDto.getPassword() == null || adminLoginDto.getPassword().isEmpty()) {
-        throw new AdminLoginException("");
-    }
-
-}
 }

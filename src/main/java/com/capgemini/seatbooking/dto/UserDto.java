@@ -1,45 +1,65 @@
 package com.capgemini.seatbooking.dto;
-
+ 
+//UserDto.java
 public class UserDto {
-	 
-    private String username;
-    private String email;
-    private String password;
  
-    // Constructors, getters, setters...
+	private String username;
+	private String email;
+	private String password;
  
-    public UserDto() {
-    }
+	private UserProfileDto userProfileDto;
  
-    public UserDto(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-    }
+	// Constructors, getters, setters...
  
-    // Getters and setters...
+	public UserDto() {
+	}
  
-    public String getUsername() {
-        return username;
-    }
+	public UserDto(String username, String email, String password) {
+		this.username = username;
+		this.email = email;
+		this.password = password;
+	}
  
-    public void setUsername(String username) {
-        this.username = username;
-    }
+	public UserDto(String username, String email, String password, UserProfileDto userProfileDto) {
+		super();
+		this.username = username;
+		this.email = email;
+		this.password = password;
+		this.userProfileDto = userProfileDto;
+	}
  
-    public String getEmail() {
-        return email;
-    }
+// Getters and setters...
  
-    public void setEmail(String email) {
-        this.email = email;
-    }
+	public UserProfileDto getUserProfileDto() {
+		return userProfileDto;
+	}
  
-    public String getPassword() {
-        return password;
-    }
+	public void setUserProfileDto(UserProfileDto userProfileDto) {
+		this.userProfileDto = userProfileDto;
+	}
  
-    public void setPassword(String password) {
-        this.password = password;
-    }
+	public String getUsername() {
+		return username;
+	}
+ 
+	public void setUsername(String username) {
+		this.username = username;
+	}
+ 
+	public String getEmail() {
+		return email;
+	}
+ 
+	public void setEmail(String email) {
+		this.email = email;
+	}
+ 
+	public String getPassword() {
+		return password;
+	}
+ 
+	public void setPassword(String password) {
+		this.password = password;
+	}
 }
+

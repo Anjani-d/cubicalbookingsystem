@@ -37,7 +37,7 @@ public class User{
 
 	@Column(name = "user_id")
 
-	private Long userId;
+	private Long Id;
 
 	@Column(nullable=false)
 
@@ -69,13 +69,13 @@ public class User{
 
 	}
  
-	public User(Long userId, String username, String email, String password, UserType userType,
+	public User(Long Id, String username, String email, String password, UserType userType,
 
 			List<Booking> bookings) {
 
 		super();
 
-		this.userId = userId;
+		this.Id = Id;
 
 		this.username = username;
 
@@ -89,15 +89,15 @@ public class User{
 
 	}
  
-	public Long getUserId() {
+	public Long getId() {
 
-		return userId;
+		return Id;
 
 	}
  
-	public void setUserId(Long userId) {
+	public void setUserId(Long Id) {
 
-		this.userId = userId;
+		this.Id = Id;
 
 	}
  
@@ -165,7 +165,7 @@ public class User{
 
 	public String toString() {
 
-		return "User [userId=" + userId + ", username=" + username + ", email=" + email + ", password=" + password
+		return "User [userId=" + Id + ", username=" + username + ", email=" + email + ", password=" + password
 
 				+ ", userType=" + userType + ", bookings=" + bookings + "]";
 
